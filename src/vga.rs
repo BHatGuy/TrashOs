@@ -2,6 +2,7 @@ use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
+use x86_64::instructions::port::PortWrite;
 
 #[macro_export]
 macro_rules! print {
@@ -67,7 +68,7 @@ pub struct Writer {
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
+        color_code: ColorCode::new(Color::Green, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     });
 }
@@ -83,14 +84,14 @@ impl ColorCode {
 
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
+        let row = BUFFER_HEIGHT - 1;
         match byte {
-            b'\n' => self.new_line(),
+            b'\n' => self.column_position = BUFFER_WIDTH,
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     self.new_line();
                 }
 
-                let row = BUFFER_HEIGHT - 1;
                 let col = self.column_position;
 
                 let color_code = self.color_code;
@@ -101,6 +102,7 @@ impl Writer {
                 self.column_position += 1;
             }
         }
+        self.set_cursor();
     }
 
     fn new_line(&mut self) {
@@ -120,14 +122,35 @@ impl Writer {
         self.column_position = 0;
     }
 
+    fn set_cursor(&self) {
+        let row = BUFFER_HEIGHT - 1;
+        let index_port = 0x3d4;
+        let data_port = 0x3d5;
+        let pos = row * BUFFER_WIDTH + self.column_position;
+        let low: u8 = (pos & 0xff).try_into().unwrap();
+        let high: u8 = (pos >> 8).try_into().unwrap();
+        unsafe {
+            // Select index 14 / CURSOR_HIGH register
+            u8::write_to_port(index_port, 14);
+            // Write high part of value to selected register (cursor high)
+            u8::write_to_port(data_port, high);
+
+            // Select index 15 / CURSOR_LOW register
+            u8::write_to_port(index_port, 15);
+            // Write low part of value to selected register (cursor low)
+            u8::write_to_port(data_port, low);
+        }
+    }
+
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
-            match byte {
-                // printable ASCII byte or newline
-                0x20..=0x7e | b'\n' => self.write_byte(byte),
-                // not part of printable ASCII range
-                _ => self.write_byte(0xfe),
-            }
+            self.write_byte(byte);
+            // match byte {
+            //     // printable ASCII byte or newline
+            //     0x20..=0x7e | b'\n' => self.write_byte(byte),
+            //     // not part of printable ASCII range
+            //     _ => self.write_byte(0xfe),
+            // }
         }
     }
 }
@@ -138,4 +161,3 @@ impl fmt::Write for Writer {
         Ok(())
     }
 }
-

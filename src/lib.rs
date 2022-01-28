@@ -10,9 +10,14 @@ pub mod vga;
 #[no_mangle]
 pub extern fn rust_main() {
     println!("Hello World");
-    serial_println!("wohoo!!! {}", 1);
+    print!("Hello World ");
+    print!("Hello World ");
+    println!("Hello World ");
+    print!("\x02Hello World ");
+    print!("Hello World ");
 
 
+    
 
     loop {}
 }
