@@ -86,7 +86,7 @@ impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         let row = BUFFER_HEIGHT - 1;
         match byte {
-            b'\n' => self.column_position = BUFFER_WIDTH,
+            b'\n' => self.new_line(),
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     self.new_line();
@@ -144,13 +144,12 @@ impl Writer {
 
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
-            self.write_byte(byte);
-            // match byte {
-            //     // printable ASCII byte or newline
-            //     0x20..=0x7e | b'\n' => self.write_byte(byte),
-            //     // not part of printable ASCII range
-            //     _ => self.write_byte(0xfe),
-            // }
+            match byte {
+                // printable ASCII byte or newline
+                b'\r' => self.column_position = 0,
+                // not part of printable ASCII range
+                b => self.write_byte(b),
+            }
         }
     }
 }

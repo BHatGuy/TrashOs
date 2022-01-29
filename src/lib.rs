@@ -9,21 +9,36 @@ pub mod interrupts;
 pub mod serial;
 pub mod vga;
 
+const BANNER: &str = "    ___/-\\___
+   |---------|
+    | | | | |
+    | | | | |
+    | | | | |
+    | | | | |
+    |_______|
+
+
+";
 
 pub fn init() {
-    print!("init gdt... ");
+    serial_print!("init gdt... ");
     gdt::init();
-    println!("done");
+    serial_println!("done");
 
-    print!("init interrupts... ");
+    serial_print!("init interrupts... ");
     interrupts::init();
-    println!("done");
+    serial_println!("done");
 }
 
 #[no_mangle]
 pub extern "C" fn rust_main() {
     init();
-    // println!("{BANNER}");
+    println!("{BANNER}");
+    println!(" ");
+    println!(" ");
+    for i in "\\|/-".chars().cycle() {
+        print!("\r{i}");
+    }
     loop {}
 }
 
