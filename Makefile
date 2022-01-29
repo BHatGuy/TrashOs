@@ -18,7 +18,12 @@ clean:
 	@rm -r build
 
 run: $(iso)
-	@qemu-system-x86_64 -cdrom $(iso) -serial stdio
+	@qemu-system-x86_64 -cdrom $(iso) -serial stdio 
+
+gdb: $(iso)
+	@gdb "$(kernel)" \
+		-ex "set arch $(arch)" \
+		-ex "target remote | exec qemu-system-x86_64 -gdb stdio -cdrom $(iso) -smp 4 -S -no-shutdown -no-reboot"
 
 iso: $(iso)
 
