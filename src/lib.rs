@@ -12,26 +12,26 @@ pub mod serial;
 pub mod vga;
 
 #[macro_export]
-macro_rules! c_println {
+macro_rules! cprintln {
     () => {
         crate::println!();
-        crate::serial_println!();
+        crate::sprintln!();
     };
     ($($arg:tt)*) => {
         crate::println!("{}",format_args!($($arg)*));
-        crate::serial_println!("{}",format_args!($($arg)*));
+        crate::sprintln!("{}",format_args!($($arg)*));
     };
 }
 
 #[macro_export]
-macro_rules! c_print {
+macro_rules! cprint {
     () => {
         crate::print!();
-        crate::serial_print!();
+        crate::sprint!();
     };
     ($($arg:tt)*) => {
         crate::print!("{}",format_args!($($arg)*));
-        crate::serial_print!("{}",format_args!($($arg)*));
+        crate::sprint!("{}",format_args!($($arg)*));
     };
 }
 
@@ -80,15 +80,15 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
     let multiboot_start = PhysAddr::new(multiboot_info_ptr.try_into().unwrap());
     let multiboot_end = multiboot_start + boot_info.total_size();
 
-    c_print!("init gdt... ");
+    cprint!("init gdt... ");
     gdt::init();
-    c_println!("done");
+    cprintln!("done");
 
-    c_print!("init interrupts... ");
+    cprint!("init interrupts... ");
     interrupts::init();
-    c_println!("done");
+    cprintln!("done");
  
-    c_print!("init memory... ");
+    cprint!("init memory... ");
     memory::init(
         kernel_start,
         kernel_end,
@@ -96,7 +96,7 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
         multiboot_end,
         boot_info,
     );
-    c_println!("done");
+    cprintln!("done");
 
     x86_64::instructions::interrupts::enable();
 
@@ -105,6 +105,6 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    c_println!("{info}");
+    cprintln!("{info}");
     hlt_loop();
 }
