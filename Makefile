@@ -23,6 +23,9 @@ clean:
 	cargo clean
 
 run: $(iso)
+	@echo ----------------------
+	@echo 
+	@echo 
 	@qemu-system-x86_64 -cdrom $(iso) -serial stdio 
 
 gdb: $(iso)
@@ -33,7 +36,7 @@ gdb: $(iso)
 iso: $(iso)
 
 $(iso): $(kernel) $(grub_cfg)
-	@echo GRUB
+	@echo building iso ...
 	@mkdir -p build/isofiles/boot/grub
 	@cp $(kernel) build/isofiles/boot/kernel.bin
 	@cp $(grub_cfg) build/isofiles/boot/grub
@@ -41,11 +44,11 @@ $(iso): $(kernel) $(grub_cfg)
 	@rm -r build/isofiles
 
 $(kernel): kernel $(assembly_object_files) $(linker_script)
-	@echo LD
+	@echo linking kernel ...
 	@ld -n -T $(linker_script) -o $(kernel) $(assembly_object_files) $(kernel_lib)
 
 kernel:
-	@echo CARGO
+	@echo compiling kernel ...
 	@cargo build $(cargo_flags)
 
 # compile assembly files

@@ -3,6 +3,8 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::port::PortWrite;
+use core::fmt::Write;
+
 
 #[macro_export]
 macro_rules! print {
@@ -17,8 +19,11 @@ macro_rules! println {
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    // TODO: use Prologue / Epilogue
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
+    
 }
 
 #[allow(dead_code)]
