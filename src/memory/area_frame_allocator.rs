@@ -1,4 +1,4 @@
-use multiboot2::{BootInformation};
+use multiboot2::BootInformation;
 use x86_64::addr::PhysAddr;
 use x86_64::structures::paging::frame::{PhysFrame, PhysFrameRangeInclusive};
 use x86_64::structures::paging::{FrameAllocator, Size4KiB};
@@ -26,7 +26,7 @@ impl AreaFrameAllocator {
         let mut allocator = AreaFrameAllocator {
             next_free_frame: PhysFrame::containing_address(PhysAddr::new(0)),
             current_area: None,
-            info: info,
+            info,
             kernel: PhysFrame::range_inclusive(kernel_start, kernel_end),
             multiboot: PhysFrame::range_inclusive(multiboot_start, multiboot_end),
         };
@@ -69,6 +69,9 @@ unsafe impl FrameAllocator<Size4KiB> for AreaFrameAllocator {
             if frame > current_area_last_frame {
                 // all frames of current area are used, switch to next area
                 self.choose_next_area();
+            } else if frame.start_address().as_u64() < 1024 * 1024 {
+                // We are in the scary memory below 1MiB
+                self.next_free_frame = PhysFrame::containing_address(PhysAddr::new(1024 * 1024));
             } else if frame >= self.kernel.start && frame <= self.kernel.end {
                 // `frame` is used by the kernel
                 self.next_free_frame = PhysFrame::from_start_address(

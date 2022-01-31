@@ -24,7 +24,7 @@ macro_rules! sprint {
 /// Prints to the host through the serial interface, appending a newline.
 #[macro_export]
 macro_rules! sprintln {
-    () => ($crate::serial_print!("\n"));
+    () => ($crate::sprint!("\n"));
     ($($arg:tt)*) => ($crate::sprint!("{}\n", format_args!($($arg)*)));
 }
 

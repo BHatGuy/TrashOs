@@ -87,7 +87,7 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
     cprint!("init interrupts... ");
     interrupts::init();
     cprintln!("done");
- 
+
     cprint!("init memory... ");
     memory::init(
         kernel_start,
