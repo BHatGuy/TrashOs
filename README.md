@@ -1,6 +1,10 @@
-# TODO
+# ROADMAP
 
-- Map the Complete Physical Memory
-- Use OffsetTable and recreate allocating from Blog
-- continue with Allocator post
-- setup testing
+- [ ] split guard
+- [ ] guard
+- [ ] setup testing
+- [ ] threads
+- [ ] own allocators
+- [x] continue with Allocator post
+- [x] Use OffsetTable and recreate allocating from Blog
+- [x] Map the Complete Physical Memory

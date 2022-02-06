@@ -5,10 +5,11 @@ use x86_64::structures::paging::{
     frame::PhysFrame, mapper::PageTableFrameMapping, FrameAllocator, MappedPageTable, Mapper, Page,
     PageTable, Size1GiB, Size4KiB,
 };
-use x86_64::structures::paging::{PageSize, PageTableFlags as Flags};
+use x86_64::structures::paging::{PageSize, PageTableFlags as Flags, OffsetPageTable};
 use x86_64::VirtAddr;
 
 mod area_frame_allocator;
+pub mod allocator;
 
 struct StartMapping {}
 
@@ -79,4 +80,7 @@ pub fn init(
 
     let offset = VirtAddr::new(1 << 44); // 16 TiB
     create_total_offset_mapping(offset, end, &mut allocator, level_4_table);
+
+    let mut mapper = unsafe{OffsetPageTable::new(level_4_table, offset)};
+    allocator::init_heap(&mut mapper, &mut allocator).expect("heap initialization failed");
 }
