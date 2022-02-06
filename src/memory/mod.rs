@@ -5,12 +5,13 @@ use x86_64::structures::paging::{
     frame::PhysFrame, mapper::PageTableFrameMapping, FrameAllocator, MappedPageTable, Mapper, Page,
     PageTable, Size1GiB, Size4KiB,
 };
-use x86_64::structures::paging::{PageSize, PageTableFlags as Flags, OffsetPageTable};
+use x86_64::structures::paging::{OffsetPageTable, PageSize, PageTableFlags as Flags};
 use x86_64::VirtAddr;
 
-mod area_frame_allocator;
 pub mod allocator;
-
+mod area_frame_allocator;
+mod block_allocator;
+pub mod linked_list;
 struct StartMapping {}
 
 unsafe impl PageTableFrameMapping for StartMapping {
@@ -58,8 +59,6 @@ pub fn init(
     multiboot_end: PhysAddr,
     boot_info: BootInformation,
 ) {
-    // TODO: use better allocator
-
     let tag = boot_info.memory_map_tag().unwrap();
     let end = PhysAddr::new(
         tag.all_memory_areas()
@@ -81,6 +80,6 @@ pub fn init(
     let offset = VirtAddr::new(1 << 44); // 16 TiB
     create_total_offset_mapping(offset, end, &mut allocator, level_4_table);
 
-    let mut mapper = unsafe{OffsetPageTable::new(level_4_table, offset)};
+    let mut mapper = unsafe { OffsetPageTable::new(level_4_table, offset) };
     allocator::init_heap(&mut mapper, &mut allocator).expect("heap initialization failed");
 }

@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
+#![feature(const_mut_refs)]
 
 use alloc::{boxed::Box, rc::Rc, vec, vec::Vec};
 use core::clone::Clone;
