@@ -13,6 +13,7 @@ kernel_lib := target/$(target)/$(opt)/lib$(crate_name).a
 ifeq ($(opt),release)
 	cargo_flags := $(cargo_flags) --release
 endif
+GDB ?= gdb
 
 .PHONY: all clean run iso kernel
 
@@ -29,7 +30,7 @@ run: $(iso)
 	@qemu-system-x86_64 -cdrom $(iso) -serial stdio 
 
 gdb: $(iso)
-	@gdb "$(kernel)" \
+	@$(GDB) "$(kernel)" \
 		-ex "set arch $(arch)" \
 		-ex "target remote | exec qemu-system-x86_64 -gdb stdio -cdrom $(iso) -smp 4 -S -no-shutdown -no-reboot"
 
