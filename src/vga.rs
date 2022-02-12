@@ -1,10 +1,9 @@
 use core::fmt;
+use core::fmt::Write;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::port::PortWrite;
-use core::fmt::Write;
-
 
 #[macro_export]
 macro_rules! print {
@@ -23,7 +22,6 @@ pub fn _print(args: fmt::Arguments) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
-    
 }
 
 #[allow(dead_code)]
@@ -96,18 +94,20 @@ impl Writer {
                 if self.column_position >= BUFFER_WIDTH {
                     self.new_line();
                 }
-
                 let col = self.column_position;
-
-                let color_code = self.color_code;
-                self.buffer.chars[row][col].write(ScreenChar {
-                    ascii_character: byte,
-                    color_code,
-                });
+                self.write_at(byte, row, col);
                 self.column_position += 1;
             }
         }
         self.set_cursor();
+    }
+
+    pub fn write_at(&mut self, byte: u8, row: usize, column: usize) {
+        let color_code = self.color_code;
+        self.buffer.chars[row][column].write(ScreenChar {
+            ascii_character: byte,
+            color_code,
+        });
     }
 
     fn new_line(&mut self) {

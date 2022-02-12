@@ -1,7 +1,7 @@
-use crate::{gdt, print, println};
+use crate::{gdt, println, vga};
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
-use spin;
+use spin::{self, Mutex};
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 lazy_static! {
@@ -59,8 +59,16 @@ pub fn init() {
     unsafe { PICS.lock().initialize() };
 }
 
+const INDICATOR: [char; 4] = ['\\', '|', '/', '-',];
+static INDEX: Mutex<usize> = Mutex::new(0);
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    print!(".");
+    let mut index = INDEX.lock();
+    *index += 1;
+    if *index >= INDICATOR.len(){
+        *index = 0;
+    }
+
+    vga::WRITER.lock().write_at(INDICATOR[*index] as u8, 0, 79);
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptVectors::Timer.as_u8());
