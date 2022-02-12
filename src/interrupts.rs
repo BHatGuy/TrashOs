@@ -2,6 +2,7 @@ use crate::{gdt, println, vga};
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin::{self, Mutex};
+use x86_64::instructions::port::Port;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 lazy_static! {
@@ -22,6 +23,7 @@ lazy_static! {
         idt.general_protection_fault
             .set_handler_fn(general_protection_fault_handler);
         idt[InterruptVectors::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptVectors::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
         idt
     };
 }
@@ -59,12 +61,12 @@ pub fn init() {
     unsafe { PICS.lock().initialize() };
 }
 
-const INDICATOR: [char; 4] = ['\\', '|', '/', '-',];
+const INDICATOR: [char; 4] = ['\\', '|', '/', '-'];
 static INDEX: Mutex<usize> = Mutex::new(0);
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     let mut index = INDEX.lock();
     *index += 1;
-    if *index >= INDICATOR.len(){
+    if *index >= INDICATOR.len() {
         *index = 0;
     }
 
@@ -72,6 +74,17 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptVectors::Timer.as_u8());
+    }
+}
+
+extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    let mut port = Port::new(0x60);
+    let scancode: u8 = unsafe { port.read() };
+    crate::task::keyboard::add_scancode(scancode);
+
+    unsafe {
+        PICS.lock()
+            .notify_end_of_interrupt(InterruptVectors::Keyboard.as_u8());
     }
 }
 

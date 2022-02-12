@@ -5,6 +5,7 @@
 #![feature(const_mut_refs)]
 
 use core::panic::PanicInfo;
+use task::{executor::Executor, Task, keyboard};
 use x86_64::addr::PhysAddr;
 extern crate alloc;
 pub mod gdt;
@@ -12,6 +13,7 @@ pub mod interrupts;
 pub mod memory;
 pub mod serial;
 pub mod vga;
+pub mod task;
 
 #[macro_export]
 macro_rules! cprintln {
@@ -99,6 +101,15 @@ fn init(multiboot_info_ptr: usize) {
     x86_64::instructions::interrupts::enable();
 }
 
+async fn async_number() -> u32 {
+    42
+}
+
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number: {}", number);
+}
+
 #[no_mangle]
 pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
     init(multiboot_info_ptr);
@@ -109,9 +120,10 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
     println!(" ");
     println!(" ");
 
-    
-
-    hlt_loop();
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 }
 
 #[panic_handler]
