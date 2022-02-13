@@ -4,7 +4,7 @@
 #![feature(alloc_error_handler)]
 #![feature(const_mut_refs)]
 
-use core::{future, panic::PanicInfo};
+use core::panic::PanicInfo;
 use task::{executor::Executor, keyboard, Task};
 use x86_64::addr::PhysAddr;
 extern crate alloc;
@@ -106,9 +106,9 @@ fn init(multiboot_info_ptr: usize) {
 async fn count(start: u64) {
     let mut count = start;
     loop {
+        task::timer::sleep((50+start).try_into().unwrap()).await;
         println!("{count}");
         count += 2;
-        task::yield_now().await;
     }
 }
 
@@ -123,6 +123,7 @@ pub extern "C" fn kernel_main(multiboot_info_ptr: usize) {
     println!(" ");
 
     let mut executor = Executor::new();
+    executor.spawn(Task::new(task::timer::indicator()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.spawn(Task::new(count(0)));
     executor.spawn(Task::new(count(1)));
