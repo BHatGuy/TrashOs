@@ -5,9 +5,9 @@ use core::{
     task::{Context, Poll},
 };
 use crossbeam::queue::ArrayQueue;
-use futures_util::stream::Stream;
-use futures_util::stream::StreamExt;
-use futures_util::task::AtomicWaker;
+use futures::stream::Stream;
+use futures::stream::StreamExt;
+use futures::task::AtomicWaker;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 
 static WAKER: AtomicWaker = AtomicWaker::new();

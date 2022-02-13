@@ -68,6 +68,7 @@ impl Executor {
     }
 
     fn sleep_if_idle(&self) {
+        // TODO: use an idle Task to do some work
         interrupts::disable();
         if self.task_queue.is_empty() {
             interrupts::enable_and_hlt();

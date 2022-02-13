@@ -36,3 +36,23 @@ impl Task {
         self.future.as_mut().poll(context)
     }
 }
+
+pub struct YieldNow(bool);
+
+impl Future for YieldNow {
+    type Output = ();
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        if !self.0 {
+            self.0 = true;
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        } else {
+            Poll::Ready(())
+        }
+    }
+}
+
+pub fn yield_now() -> YieldNow {
+    YieldNow(false)
+}
